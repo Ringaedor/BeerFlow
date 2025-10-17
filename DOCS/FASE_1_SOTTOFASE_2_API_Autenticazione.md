@@ -2,7 +2,7 @@
 
 ## 1. Obiettivi
 
-L'obiettivo di questa sottofase è implementare un sistema di autenticazione sicuro basato su JSON Web Tokens (JWT). Questo permetterà agli utenti di registrarsi, effettuare il login e accedere a rotte protette. Verrà anche creato il modulo per la gestione degli utenti, strettamente legato a quello di autenticazione.
+L'obiettivo di questa sottofase è implementare un sistema di autenticazione sicuro basato su JSON Web Tokens (JWT). Questo permetterà agli utenti di effettuare il login e accedere a rotte protette. La creazione degli utenti, invece, sarà un'operazione riservata agli amministratori. Verrà anche creato il modulo per la gestione degli utenti, strettamente legato a quello di autenticazione.
 
 ## 2. Funzionalità da Implementare
 
@@ -18,11 +18,11 @@ L'obiettivo di questa sottofase è implementare un sistema di autenticazione sic
 - **Descrizione:** Questo modulo conterrà la logica per l'autenticazione. Implementerà le strategie di login (locale, basata su email/password) e di validazione dei JWT.
 - **Tecnologie:** `@nestjs/passport`, `@nestjs/jwt`, `passport`, `passport-local`, `passport-jwt`.
 
-### 2.4. Endpoint di Registrazione e Login
-- **Descrizione:** Verranno creati due endpoint pubblici:
-    - `POST /auth/register`: Per creare un nuovo utente.
-    - `POST /auth/login`: Per autenticare un utente e restituire un JWT.
-- **Tecnologie:** NestJS controllers.
+### 2.4. Endpoint di Login e Creazione Utente (Admin)
+- **Descrizione:** Verranno creati due endpoint:
+    - `POST /auth/login` (Pubblico): Per autenticare un utente e restituire un JWT.
+    - `POST /users` (Protetto, solo Admin): Per creare un nuovo utente.
+- **Tecnologie:** NestJS controllers, NestJS Guards.
 
 ### 2.5. Protezione delle Rotte (Route Guarding)
 - **Descrizione:** Verrà implementata una "Guard" JWT. Questa `Guard` potrà essere applicata a qualsiasi endpoint dell'API per renderlo accessibile solo a utenti autenticati (ovvero, che forniscono un JWT valido nell'header della richiesta).
@@ -40,8 +40,7 @@ backend/
 └── src/
     ├── auth/
     │   ├── dto/
-    │   │   ├── login.dto.ts
-    │   │   └── register.dto.ts
+    │   │   └── login.dto.ts
     │   ├── strategies/
     │   │   ├── jwt.strategy.ts
     │   │   └── local.strategy.ts
@@ -74,10 +73,10 @@ backend/
 
 ### 3.3. API Endpoints
 - **Auth Controller (`/auth`):**
-  - `POST /register`: Crea un nuovo utente.
   - `POST /login`: Effettua il login e restituisce un `access_token`.
   - `GET /profile`: Rotta protetta di esempio che restituisce il profilo dell'utente loggato.
 - **Users Controller (`/users`):**
+  - `POST /`: (Admin) Crea un nuovo utente.
   - `GET /`: (Admin) Restituisce tutti gli utenti.
   - `GET /:id`: (Admin) Restituisce un utente specifico.
   - `PATCH /:id`: (Admin) Aggiorna un utente.
@@ -85,9 +84,9 @@ backend/
 
 ## 4. Criteri di Accettazione
 
-- Un nuovo utente può registrarsi con successo tramite l'endpoint `POST /auth/register`.
+- Un amministratore può creare un nuovo utente con successo tramite l'endpoint protetto `POST /users`.
 - La password dell'utente viene salvata nel database in formato hashato e non in chiaro.
-- Un utente registrato può effettuare il login tramite `POST /auth/login` e ricevere un JWT valido.
+- Un utente creato può effettuare il login tramite `POST /auth/login` e ricevere un JWT valido.
 - Un utente non autenticato che tenta di accedere a una rotta protetta (es. `GET /auth/profile`) riceve un errore `401 Unauthorized`.
 - Un utente autenticato può accedere con successo alle rotte protette fornendo il JWT.
 - Un utente con un ruolo non autorizzato che tenta di accedere a una rotta protetta da `RolesGuard` riceve un errore `403 Forbidden`.
