@@ -1,17 +1,16 @@
-import { Box, Flex, Heading } from "@chakra-ui/react";
 import { LoginForm } from "../components/LoginForm";
 
 export const LoginPage = () => {
   return (
-    <Flex minH="100vh" align="center" justify="center">
-      <Box p={8} borderWidth={1} borderRadius={8} boxShadow="lg">
-        <Box textAlign="center">
-          <Heading>Login</Heading>
-        </Box>
-        <Box my={4} textAlign="left">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="p-8 bg-white rounded-lg shadow-md w-full max-w-md">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Login</h1>
+        </div>
+        <div className="mt-4">
           <LoginForm />
-        </Box>
-      </Box>
-    </Flex>
+        </div>
+      </div>
+    </div>
   );
 };
