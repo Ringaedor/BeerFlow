@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: BeerFlow API
+  version: 1.0.0
+  description: API base per il gestionale BeerFlow (auth, tavoli, comande, magazzino, documenti, ticket, clienti)
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: http://localhost:3000/v1
+    description: Local dev
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+    Venue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        settings:
+          type: object
+    Table:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venue_id:
+          type: string
+        name:
+          type: string
+        seats:
+          type: integer
+        position_json:
+          type: object
+        status:
+          type: string
+          enum: [free, booked, occupied, cleaning, out_of_service]
+    Product:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        venue_id: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        cost: { type: number, format: float }
+        price: { type: number, format: float }
+        attributes: { type: object }
+    Lot:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string }
+        lot_code: { type: string }
+        qty_init: { type: number }
+        qty_current: { type: number }
+        expiry_date: { type: string, format: date }
+        location: { type: string }
+    StockMovement:
+      type: object
+      properties:
+        id: { type: string }
+        lot_id: { type: string }
+        product_id: { type: string }
+        qty: { type: number }
+        type: { type: string }
+        reference_type: { type: string }
+        reference_id: { type: string }
+        user_id: { type: string }
+        created_at: { type: string, format: date-time }
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        venue_id: { type: string }
+        table_id: { type: string }
+        user_id: { type: string }
+        status: { type: string }
+        total: { type: number }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      type: object
+      properties:
+        product_id: { type: string }
+        qty: { type: integer }
+        price: { type: number }
+        notes: { type: string }
+    Document:
+      type: object
+      properties:
+        id: { type: string }
+        venue_id: { type: string }
+        uploader_id: { type: string }
+        type: { type: string }
+        storage_path: { type: string }
+        parsed_json: { type: object }
+        status: { type: string }
+    Ticket:
+      type: object
+      properties:
+        id: { type: string }
+        venue_id: { type: string }
+        area: { type: string }
+        description: { type: string }
+        priority: { type: string }
+        status: { type: string }
+        assignee_id: { type: string }
+    Customer:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dob: { type: string, format: date }
+        attrs: { type: object }
+    Consent:
+      type: object
+      properties:
+        id: { type: string }
+        customer_id: { type: string }
+        purpose: { type: string }
+        channel: { type: string }
+        granted: { type: boolean }
+        version: { type: string }
+        granted_at: { type: string, format: date-time }
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+  /venues/{venueId}/tables:
+    get:
+      summary: Lista tavoli per venue
+      tags: [Venue]
+      parameters:
+        - name: venueId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+  /orders:
+    post:
+      summary: Crea una nuova comanda
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venue_id, table_id, user_id, items]
+              properties:
+                venue_id: { type: string }
+                table_id: { type: string }
+                user_id: { type: string }
+                items:
+                  type: array
+                  items: { $ref: '#/components/schemas/OrderItem' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /documents/upload:
+    post:
+      summary: Upload document
+      tags: [Documents]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+      responses:
+        '201':
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+  /documents/{id}:
+    get:
+      summary: Ottieni documento e parsed JSON
+      tags: [Documents]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+  /stock_movements:
+    post:
+      summary: Crea movimento di magazzino
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+      responses:
+        '201':
+          description: Created
+  /tickets:
+    post:
+      summary: Crea ticket manutentivo
+      tags: [Maintenance]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venue_id, area, description]
+              properties:
+                venue_id: { type: string }
+                area: { type: string }
+                description: { type: string }
+                priority: { type: string }
+                reporter_id: { type: string }
+      responses:
+        '201':
+          description: Created
+  /customers:
+    post:
+      summary: Crea / unisce customer identity
+      tags: [CRM]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                identities:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      provider: { type: string }
+                      identifier: { type: string }
+      responses:
+        '201':
+          description: Created
+  /reservations:
+    post:
+      summary: Crea prenotazione
+      tags: [Reservations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venue_id, start_time, people_count]
+              properties:
+                venue_id: { type: string }
+                customer_id: { type: string }
+                table_id: { type: string }
+                start_time: { type: string, format: date-time }
+                end_time: { type: string, format: date-time }
+                people_count: { type: integer }
+      responses:
+        '201':
+          description: Created
+  /inventory/products:
+    get:
+      summary: Lista prodotti inventario
+      tags: [Inventory]
+      parameters:
+        - name: venue_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Product' }
