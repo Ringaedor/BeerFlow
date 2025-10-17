@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['@chakra-ui/react'],
+    include: ['@chakra-ui/react', '@emotion/react', '@emotion/styled', 'framer-motion'],
   },
   test: {
     globals: true,
