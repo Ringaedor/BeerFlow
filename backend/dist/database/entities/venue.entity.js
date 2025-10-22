@@ -13,6 +13,9 @@ exports.Venue = void 0;
 const typeorm_1 = require("typeorm");
 const base_entity_1 = require("./base.entity");
 const user_entity_1 = require("./user.entity");
+const product_category_entity_1 = require("./product-category.entity");
+const supplier_entity_1 = require("./supplier.entity");
+const product_entity_1 = require("./product.entity");
 let Venue = class Venue extends base_entity_1.BaseEntity {
     name;
     address;
@@ -21,6 +24,9 @@ let Venue = class Venue extends base_entity_1.BaseEntity {
     subscription_expires_at;
     active;
     users;
+    product_categories;
+    suppliers;
+    products;
 };
 exports.Venue = Venue;
 __decorate([
@@ -59,6 +65,18 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => user_entity_1.User, user => user.venue),
     __metadata("design:type", Array)
 ], Venue.prototype, "users", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => product_category_entity_1.ProductCategory, category => category.venue),
+    __metadata("design:type", Array)
+], Venue.prototype, "product_categories", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => supplier_entity_1.Supplier, supplier => supplier.venue),
+    __metadata("design:type", Array)
+], Venue.prototype, "suppliers", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => product_entity_1.Product, product => product.venue),
+    __metadata("design:type", Array)
+], Venue.prototype, "products", void 0);
 exports.Venue = Venue = __decorate([
     (0, typeorm_1.Entity)('venues')
 ], Venue);

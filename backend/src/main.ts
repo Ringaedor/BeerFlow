@@ -33,13 +33,18 @@ async function bootstrap() {
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('BeerFlow API')
-    .setDescription('Complete brewery management system API')
-    .setVersion('1.0')
+    .setDescription('Complete brewery management system API - Phase 1 & 2')
+    .setVersion('2.0')
     .addBearerAuth()
     .addTag('auth', 'Authentication endpoints')
     .addTag('venues', 'Venue management')
     .addTag('users', 'User management')
     .addTag('health', 'Health check endpoints')
+    .addTag('product-categories', 'Product categories management')
+    .addTag('suppliers', 'Supplier management')
+    .addTag('products', 'Product & inventory management')
+    .addTag('lots', 'Lot tracking with FEFO')
+    .addTag('stock-movements', 'Stock movements & audit trail')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

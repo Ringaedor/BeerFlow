@@ -1,6 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
+import { ProductCategory } from './product-category.entity';
+import { Supplier } from './supplier.entity';
+import { Product } from './product.entity';
 
 @Entity('venues')
 export class Venue extends BaseEntity {
@@ -33,4 +36,13 @@ export class Venue extends BaseEntity {
   // Relations
   @OneToMany(() => User, user => user.venue)
   users: User[];
+
+  @OneToMany(() => ProductCategory, category => category.venue)
+  product_categories: ProductCategory[];
+
+  @OneToMany(() => Supplier, supplier => supplier.venue)
+  suppliers: Supplier[];
+
+  @OneToMany(() => Product, product => product.venue)
+  products: Product[];
 }

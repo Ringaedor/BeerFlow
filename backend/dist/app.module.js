@@ -14,6 +14,12 @@ const venues_module_1 = require("./venues/venues.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const health_module_1 = require("./health/health.module");
+const product_categories_module_1 = require("./product-categories/product-categories.module");
+const suppliers_module_1 = require("./suppliers/suppliers.module");
+const products_module_1 = require("./products/products.module");
+const lots_module_1 = require("./lots/lots.module");
+const stock_movements_module_1 = require("./stock-movements/stock-movements.module");
+const stock_module_1 = require("./stock/stock.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -29,6 +35,12 @@ exports.AppModule = AppModule = __decorate([
             venues_module_1.VenuesModule,
             users_module_1.UsersModule,
             health_module_1.HealthModule,
+            product_categories_module_1.ProductCategoriesModule,
+            suppliers_module_1.SuppliersModule,
+            products_module_1.ProductsModule,
+            lots_module_1.LotsModule,
+            stock_module_1.StockModule,
+            stock_movements_module_1.StockMovementsModule,
         ],
     })
 ], AppModule);
