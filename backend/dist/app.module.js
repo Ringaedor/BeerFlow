@@ -13,6 +13,7 @@ const database_module_1 = require("./database/database.module");
 const venues_module_1 = require("./venues/venues.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
+const health_module_1 = require("./health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,6 +28,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             venues_module_1.VenuesModule,
             users_module_1.UsersModule,
+            health_module_1.HealthModule,
         ],
     })
 ], AppModule);

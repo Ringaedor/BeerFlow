@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: beerflow-postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mattia
+      POSTGRES_DB: beerflow_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beerflow-dev-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: beerflow-redis-dev
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-dev-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - beerflow-dev-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: beerflow-backend-dev
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: mattia
+      DATABASE_NAME: beerflow_dev
+      JWT_SECRET: beerflow_jwt_secret_2024_ultra_secure_key
+      JWT_EXPIRES_IN: 7d
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - '3000:3000'
+      - '9229:9229'  # Debug port
+    volumes:
+      - ./src:/app/src
+      - ./package*.json:/app/
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run start:dev
+    networks:
+      - beerflow-dev-network
+
+volumes:
+  postgres-dev-data:
+  redis-dev-data:
+
+networks:
+  beerflow-dev-network:
+    driver: bridge

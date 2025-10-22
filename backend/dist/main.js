@@ -5,6 +5,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const config_1 = require("@nestjs/config");
 const app_module_1 = require("./app.module");
+const metrics_interceptor_1 = require("./common/interceptors/metrics.interceptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -13,6 +14,7 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
+    app.useGlobalInterceptors(new metrics_interceptor_1.MetricsInterceptor());
     app.enableCors({
         origin: configService.get('CORS_ORIGIN'),
         credentials: true,
@@ -26,6 +28,7 @@ async function bootstrap() {
         .addTag('auth', 'Authentication endpoints')
         .addTag('venues', 'Venue management')
         .addTag('users', 'User management')
+        .addTag('health', 'Health check endpoints')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('api/docs', app, document);

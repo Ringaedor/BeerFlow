@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Global interceptors
+  app.useGlobalInterceptors(new MetricsInterceptor());
 
   // CORS
   app.enableCors({
@@ -35,6 +39,7 @@ async function bootstrap() {
     .addTag('auth', 'Authentication endpoints')
     .addTag('venues', 'Venue management')
     .addTag('users', 'User management')
+    .addTag('health', 'Health check endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

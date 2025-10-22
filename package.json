@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@nestjs/terminus": "^11.0.0"
+  }
+}
