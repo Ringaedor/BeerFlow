@@ -1,0 +1,156 @@
+# AlertManager Configuration for BeerFlow
+#
+# Routes alerts to appropriate receivers (email, Slack, PagerDuty, etc.)
+
+global:
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts (configure as needed)
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'alerts@beerflow.com'
+  # smtp_auth_username: 'alerts@beerflow.com'
+  # smtp_auth_password: 'your-app-password'
+  # smtp_require_tls: true
+
+# Templates for alert messages
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'component', 'venue_id']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # Warning alerts
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    # Info alerts
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 5m
+      repeat_interval: 24h
+
+    # Stock operations specific alerts
+    - match:
+        component: stock_operations
+      receiver: 'stock-operations-team'
+      continue: true
+
+    # FEFO algorithm alerts
+    - match:
+        component: fefo_algorithm
+      receiver: 'development-team'
+      continue: true
+
+# Alert receivers
+receivers:
+  # Default receiver (logs only)
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  # Critical alerts - multiple channels
+  - name: 'critical-alerts'
+    # Email notifications
+    # email_configs:
+    #   - to: 'ops-team@beerflow.com'
+    #     subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+    #     html: '{{ range .Alerts }}{{ .Annotations.description }}<br>{{ end }}'
+
+    # Slack notifications
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+    #     channel: '#alerts-critical'
+    #     title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+    #     send_resolved: true
+
+    # PagerDuty integration
+    # pagerduty_configs:
+    #   - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+    #     description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/critical'
+        send_resolved: true
+
+  # Warning alerts
+  - name: 'warning-alerts'
+    # email_configs:
+    #   - to: 'dev-team@beerflow.com'
+    #     subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+    #     channel: '#alerts-warning'
+    #     title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/warning'
+        send_resolved: true
+
+  # Info alerts
+  - name: 'info-alerts'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/info'
+        send_resolved: true
+
+  # Stock operations team
+  - name: 'stock-operations-team'
+    # email_configs:
+    #   - to: 'stock-ops@beerflow.com'
+    #     subject: 'Stock Operations Alert: {{ .GroupLabels.alertname }}'
+
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/stock-ops'
+        send_resolved: true
+
+  # Development team
+  - name: 'development-team'
+    # email_configs:
+    #   - to: 'dev-team@beerflow.com'
+    #     subject: 'Development Alert: {{ .GroupLabels.alertname }}'
+
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/dev-team'
+        send_resolved: true
+
+# Inhibition rules (suppress certain alerts when others are firing)
+inhibit_rules:
+  # Suppress warning if critical is firing for same alert
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component', 'venue_id']
+
+  # Suppress info if warning or critical is firing
+  - source_match_re:
+      severity: 'critical|warning'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'component', 'venue_id']
+
+  # Suppress individual errors if API is down
+  - source_match:
+      alertname: 'BeerFlowAPIDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['job']

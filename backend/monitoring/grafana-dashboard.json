@@ -1,0 +1,432 @@
+{
+  "dashboard": {
+    "title": "BeerFlow - Stock Operations & Business Metrics",
+    "tags": ["beerflow", "stock", "inventory", "business"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Stock Movements - Operations/sec",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(beerflow_stock_movements_total{status=\"success\"}[5m])",
+            "legendFormat": "{{movement_type}} - {{venue_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Operations/sec",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Stock Movement Duration (p95, p99)",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(beerflow_stock_movement_duration_ms_bucket[5m]))",
+            "legendFormat": "p95 - {{movement_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(beerflow_stock_movement_duration_ms_bucket[5m]))",
+            "legendFormat": "p99 - {{movement_type}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (ms)",
+            "format": "ms"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 100,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true
+          },
+          {
+            "value": 200,
+            "colorMode": "custom",
+            "op": "gt",
+            "fill": true,
+            "line": true,
+            "fillColor": "rgba(255, 0, 0, 0.3)"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Stock Movement Errors",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(beerflow_stock_movement_errors_total[5m])",
+            "legendFormat": "{{error_type}} - {{movement_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Errors/sec",
+            "format": "short"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [0.1],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "5m", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "avg"
+              },
+              "type": "query"
+            }
+          ],
+          "name": "High Stock Movement Error Rate"
+        }
+      },
+      {
+        "id": 4,
+        "title": "FEFO Allocations - Duration",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(beerflow_fefo_allocation_duration_ms_bucket[5m]))",
+            "legendFormat": "p95 - FEFO",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(beerflow_fefo_allocation_duration_ms_bucket[5m]))",
+            "legendFormat": "p99 - FEFO",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (ms)",
+            "format": "ms"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 200,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true
+          },
+          {
+            "value": 500,
+            "colorMode": "custom",
+            "op": "gt",
+            "fill": true,
+            "line": true,
+            "fillColor": "rgba(255, 0, 0, 0.3)"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Product Query Performance",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(beerflow_product_query_duration_ms_bucket[5m]))",
+            "legendFormat": "p95 - {{query_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (ms)",
+            "format": "ms"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 50,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true
+          },
+          {
+            "value": 100,
+            "colorMode": "custom",
+            "op": "gt",
+            "fill": true,
+            "line": true,
+            "fillColor": "rgba(255, 0, 0, 0.3)"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Current Stock Levels",
+        "type": "table",
+        "gridPos": {
+          "x": 12,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "beerflow_current_stock_level",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "__name__": true,
+                "Time": true,
+                "job": true,
+                "instance": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "product_name": "Product",
+                "sku": "SKU",
+                "Value": "Stock Level",
+                "venue_id": "Venue"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Low Stock Alert Count",
+        "type": "stat",
+        "gridPos": {
+          "x": 0,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "sum(beerflow_low_stock_products_count)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "textMode": "auto"
+        },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "value": null,
+              "color": "green"
+            },
+            {
+              "value": 5,
+              "color": "yellow"
+            },
+            {
+              "value": 10,
+              "color": "red"
+            }
+          ]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Total Inventory Value (EUR)",
+        "type": "stat",
+        "gridPos": {
+          "x": 6,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "sum(beerflow_total_product_value_eur)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyEUR"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Stock Movement Success Rate",
+        "type": "gauge",
+        "gridPos": {
+          "x": 12,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(beerflow_stock_movements_total{status=\"success\"}[5m])) / sum(rate(beerflow_stock_movements_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "value": null,
+              "color": "red"
+            },
+            {
+              "value": 95,
+              "color": "yellow"
+            },
+            {
+              "value": 99,
+              "color": "green"
+            }
+          ]
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Health Check Performance",
+        "type": "graph",
+        "gridPos": {
+          "x": 18,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(beerflow_health_check_duration_ms_bucket[5m]))",
+            "legendFormat": "{{check_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (ms)",
+            "format": "ms"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "venue",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(beerflow_stock_movements_total, venue_id)",
+          "refresh": 1,
+          "multi": false,
+          "includeAll": true
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Deployments",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "changes(beerflow_stock_movements_total[1m]) > 0",
+          "iconColor": "blue",
+          "tagKeys": "deployment"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    }
+  }
+}

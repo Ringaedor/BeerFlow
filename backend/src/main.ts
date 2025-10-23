@@ -4,10 +4,13 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
+import { StockMetricsInterceptor } from './common/interceptors/stock-metrics.interceptor';
+import { PrometheusMetricsService } from './common/services/prometheus-metrics.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const prometheusMetrics = app.get(PrometheusMetricsService);
 
   // Global pipes
   app.useGlobalPipes(
@@ -18,8 +21,11 @@ async function bootstrap() {
     }),
   );
 
-  // Global interceptors
-  app.useGlobalInterceptors(new MetricsInterceptor());
+  // Global interceptors with Prometheus integration
+  app.useGlobalInterceptors(
+    new MetricsInterceptor(),
+    new StockMetricsInterceptor(prometheusMetrics),
+  );
 
   // CORS
   app.enableCors({
@@ -40,6 +46,7 @@ async function bootstrap() {
     .addTag('venues', 'Venue management')
     .addTag('users', 'User management')
     .addTag('health', 'Health check endpoints')
+    .addTag('metrics', 'Prometheus metrics for monitoring')
     .addTag('product-categories', 'Product categories management')
     .addTag('suppliers', 'Supplier management')
     .addTag('products', 'Product & inventory management')
@@ -55,5 +62,6 @@ async function bootstrap() {
 
   console.log(`🍺 BeerFlow API is running on: http://localhost:${port}`);
   console.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
+  console.log(`📊 Prometheus metrics: http://localhost:${port}/metrics`);
 }
 bootstrap();

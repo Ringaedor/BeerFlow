@@ -7,6 +7,7 @@ import {
   MemoryHealthIndicator,
   DiskHealthIndicator,
 } from '@nestjs/terminus';
+import { StockHealthIndicator } from './stock-health.indicator';
 
 @ApiTags('health')
 @Controller('health')
@@ -16,6 +17,7 @@ export class HealthController {
     private db: TypeOrmHealthIndicator,
     private memory: MemoryHealthIndicator,
     private disk: DiskHealthIndicator,
+    private stockHealth: StockHealthIndicator,
   ) {}
 
   @Get()
@@ -55,6 +57,23 @@ export class HealthController {
   live() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 200 * 1024 * 1024),
+    ]);
+  }
+
+  @Get('stock')
+  @ApiOperation({ summary: 'Stock operations health check' })
+  @ApiResponse({
+    status: 200,
+    description: 'Stock operations are healthy',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Stock operations are degraded or failing',
+  })
+  @HealthCheck()
+  checkStock() {
+    return this.health.check([
+      () => this.stockHealth.isHealthy('stock_operations'),
     ]);
   }
 }

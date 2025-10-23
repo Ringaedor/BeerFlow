@@ -14,6 +14,7 @@ const venues_module_1 = require("./venues/venues.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const health_module_1 = require("./health/health.module");
+const common_module_1 = require("./common/common.module");
 const product_categories_module_1 = require("./product-categories/product-categories.module");
 const suppliers_module_1 = require("./suppliers/suppliers.module");
 const products_module_1 = require("./products/products.module");
@@ -31,6 +32,7 @@ exports.AppModule = AppModule = __decorate([
                 envFilePath: '.env',
             }),
             database_module_1.DatabaseModule,
+            common_module_1.CommonModule,
             auth_module_1.AuthModule,
             venues_module_1.VenuesModule,
             users_module_1.UsersModule,

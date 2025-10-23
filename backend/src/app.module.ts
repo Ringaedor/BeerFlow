@@ -5,6 +5,7 @@ import { VenuesModule } from './venues/venues.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
+import { CommonModule } from './common/common.module';
 import { ProductCategoriesModule } from './product-categories/product-categories.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { ProductsModule } from './products/products.module';
@@ -19,6 +20,7 @@ import { StockModule } from './stock/stock.module';
       envFilePath: '.env',
     }),
     DatabaseModule,
+    CommonModule,
     AuthModule,
     VenuesModule,
     UsersModule,

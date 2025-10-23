@@ -46,8 +46,7 @@ export class TestDataFactory {
     user.venue_id = venue_id;
     user.email = `user${idCounter}@test.com`;
     user.password_hash = 'hashed_password';
-    user.first_name = 'Test';
-    user.last_name = 'User';
+    user.name = 'Test User';
     user.role = UserRole.MANAGER;
     user.active = true;
     user.created_at = new Date();

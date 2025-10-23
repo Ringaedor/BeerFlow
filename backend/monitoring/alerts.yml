@@ -1,0 +1,159 @@
+# Prometheus Alert Rules for BeerFlow
+#
+# Critical business alerts for stock operations
+
+groups:
+  - name: beerflow_stock_operations
+    interval: 30s
+    rules:
+      # Stock Movement Performance Alerts
+      - alert: HighStockMovementLatency
+        expr: histogram_quantile(0.95, rate(beerflow_stock_movement_duration_ms_bucket[5m])) > 200
+        for: 5m
+        labels:
+          severity: warning
+          component: stock_operations
+        annotations:
+          summary: 'High stock movement latency detected'
+          description: 'Stock movement p95 latency is {{ $value }}ms (threshold: 200ms) for venue {{ $labels.venue_id }}'
+
+      - alert: CriticalStockMovementLatency
+        expr: histogram_quantile(0.95, rate(beerflow_stock_movement_duration_ms_bucket[5m])) > 500
+        for: 2m
+        labels:
+          severity: critical
+          component: stock_operations
+        annotations:
+          summary: 'CRITICAL: Stock movement latency very high'
+          description: 'Stock movement p95 latency is {{ $value }}ms (critical threshold: 500ms) for venue {{ $labels.venue_id }}'
+
+      # FEFO Algorithm Performance
+      - alert: HighFEFOAllocationLatency
+        expr: histogram_quantile(0.95, rate(beerflow_fefo_allocation_duration_ms_bucket[5m])) > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: fefo_algorithm
+        annotations:
+          summary: 'High FEFO allocation latency'
+          description: 'FEFO allocation p95 latency is {{ $value }}ms (threshold: 500ms) for venue {{ $labels.venue_id }}'
+
+      - alert: CriticalFEFOAllocationLatency
+        expr: histogram_quantile(0.95, rate(beerflow_fefo_allocation_duration_ms_bucket[5m])) > 1000
+        for: 2m
+        labels:
+          severity: critical
+          component: fefo_algorithm
+        annotations:
+          summary: 'CRITICAL: FEFO allocation latency very high'
+          description: 'FEFO allocation p95 latency is {{ $value }}ms (critical threshold: 1000ms) for venue {{ $labels.venue_id }}'
+
+      # Error Rate Alerts
+      - alert: HighStockMovementErrorRate
+        expr: sum(rate(beerflow_stock_movement_errors_total[5m])) / sum(rate(beerflow_stock_movements_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: stock_operations
+        annotations:
+          summary: 'High stock movement error rate'
+          description: 'Stock movement error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+
+      - alert: CriticalStockMovementErrorRate
+        expr: sum(rate(beerflow_stock_movement_errors_total[5m])) / sum(rate(beerflow_stock_movements_total[5m])) > 0.10
+        for: 2m
+        labels:
+          severity: critical
+          component: stock_operations
+        annotations:
+          summary: 'CRITICAL: Stock movement error rate very high'
+          description: 'Stock movement error rate is {{ $value | humanizePercentage }} (critical threshold: 10%)'
+
+      # FEFO Error Rate
+      - alert: FEFOAllocationFailures
+        expr: rate(beerflow_fefo_allocation_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: fefo_algorithm
+        annotations:
+          summary: 'FEFO allocation failures detected'
+          description: 'FEFO allocation error rate is {{ $value }} errors/sec for venue {{ $labels.venue_id }}'
+
+      # Business Metrics Alerts
+      - alert: HighLowStockCount
+        expr: beerflow_low_stock_products_count > 10
+        for: 10m
+        labels:
+          severity: info
+          component: inventory
+        annotations:
+          summary: 'High number of low-stock products'
+          description: '{{ $value }} products are below minimum stock level for venue {{ $labels.venue_id }}'
+
+      - alert: CriticalLowStockCount
+        expr: beerflow_low_stock_products_count > 20
+        for: 5m
+        labels:
+          severity: warning
+          component: inventory
+        annotations:
+          summary: 'CRITICAL: Very high number of low-stock products'
+          description: '{{ $value }} products are below minimum stock level for venue {{ $labels.venue_id }}'
+
+      # Product Query Performance
+      - alert: HighProductQueryLatency
+        expr: histogram_quantile(0.95, rate(beerflow_product_query_duration_ms_bucket[5m])) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: product_queries
+        annotations:
+          summary: 'High product query latency'
+          description: 'Product query p95 latency is {{ $value }}ms (threshold: 100ms) for {{ $labels.query_type }}'
+
+      # Health Check Alerts
+      - alert: HealthCheckFailing
+        expr: histogram_quantile(0.95, rate(beerflow_health_check_duration_ms_bucket[5m])) > 200
+        for: 5m
+        labels:
+          severity: warning
+          component: health_checks
+        annotations:
+          summary: 'Health check performance degraded'
+          description: 'Health check {{ $labels.check_type }} p95 latency is {{ $value }}ms (threshold: 200ms)'
+
+  - name: beerflow_system_health
+    interval: 30s
+    rules:
+      # Service Availability
+      - alert: BeerFlowAPIDown
+        expr: up{job="beerflow-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: 'BeerFlow API is down'
+          description: 'The BeerFlow API has been down for more than 1 minute'
+
+      # Request Volume Anomaly
+      - alert: UnusuallyHighRequestRate
+        expr: sum(rate(beerflow_stock_movements_total[5m])) > 100
+        for: 10m
+        labels:
+          severity: info
+          component: stock_operations
+        annotations:
+          summary: 'Unusually high stock movement request rate'
+          description: 'Stock movement rate is {{ $value }} ops/sec (unusual for this time)'
+
+      - alert: UnusuallyLowRequestRate
+        expr: sum(rate(beerflow_stock_movements_total[5m])) < 0.01
+        for: 30m
+        labels:
+          severity: info
+          component: stock_operations
+        annotations:
+          summary: 'Unusually low stock movement request rate'
+          description: 'Stock movement rate is {{ $value }} ops/sec (possible issue or off-peak hours)'
